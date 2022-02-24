@@ -8,15 +8,21 @@ export class AppService implements OnModuleInit {
   private currentChallenge: string
   private availableChallenges: string[]
   private usedChallenges: string[]
+  private newChallengeInterval: NodeJS.Timer
 
   constructor(private eventEmitter: EventEmitter2, private prisma: PrismaService){}
 
   onModuleInit() {
       this.initChallenges()
-      setInterval(() => {
-        this.setNewRandomChallenge()
-        this.eventEmitter.emit('new.challenge', { newChallenge: this.currentChallenge })
-      }, 5000)
+      this.setNewChallengeInterval(5000)
+  }
+
+  setNewChallengeInterval(duration: number){
+    this.setNewRandomChallenge()
+    clearInterval(this.newChallengeInterval)
+    this.newChallengeInterval = setInterval(() => {
+      this.setNewRandomChallenge()
+    }, duration)
   }
 
   getCurrentChallenge(): string {
@@ -69,6 +75,7 @@ export class AppService implements OnModuleInit {
       this.addUsedChallenge(this.getCurrentChallenge())
       this.removeAvailableChallengeAt(index)
       this.setCurrentChallenge(randomPickedChallenge)
+      this.eventEmitter.emit('new.challenge', { newChallenge: this.currentChallenge })
     } else {
       this.initChallenges()
     }

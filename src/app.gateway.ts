@@ -23,6 +23,11 @@ export class AppGateway implements OnGatewayConnection{
         this.appService.addSharedChallenge(challengeName)
     }
 
+    @SubscribeMessage('skip.sharedChallenge')
+    handleSkippingSharedChallenge(){
+        this.appService.setNewChallengeInterval(5000)
+    }
+
     @OnEvent('new.challenge')
     handleNewChallenge(payload: {newChallenge: string}){
         this.server.emit('new.challenge', {challenge: payload.newChallenge})
