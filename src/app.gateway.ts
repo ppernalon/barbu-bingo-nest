@@ -5,9 +5,7 @@ import { AppService } from "./app.service";
 import { OnEvent } from '@nestjs/event-emitter'
 
 @WebSocketGateway(  {
-    cors: {
-        origin: '*',
-    }
+    cors: true,
 })
 @Injectable()
 export class AppGateway implements OnGatewayConnection{
