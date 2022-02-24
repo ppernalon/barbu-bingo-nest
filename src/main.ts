@@ -8,10 +8,10 @@ async function bootstrap() {
   // await app.listen(3000);
 
   const httpsOptions = {
-    key: fs.readFileSync('/etc/ssl/private/apache-selfsigned.key'),
-    cert: fs.readFileSync('/etc/ssl/certs/apache-selfsigned.crt'),
+    key: fs.readFileSync('./secrets/private-key.key'),
+    cert: fs.readFileSync('./secrets/public-certificate.crt'),
   };
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     httpsOptions,
   });
   await app.listen(3000);
