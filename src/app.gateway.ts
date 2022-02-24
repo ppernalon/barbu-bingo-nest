@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { OnGatewayConnection, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { MessageBody, OnGatewayConnection, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server } from "socket.io";
 import { AppService } from "./app.service";
 import { OnEvent } from '@nestjs/event-emitter'
@@ -16,6 +16,11 @@ export class AppGateway implements OnGatewayConnection{
 
     handleConnection(client: any, ...args: any[]) {
         this.server.emit('connection', {challenge: this.appService.getCurrentChallenge()})
+    }
+
+    @SubscribeMessage('new.sharedChallenge')
+    handleAddingSharedChallenge(@MessageBody() challengeName: string){
+        this.appService.addSharedChallenge(challengeName)
     }
 
     @OnEvent('new.challenge')

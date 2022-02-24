@@ -1,5 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
+import { PrismaService } from './prisma.service'
+import { PrismaClient, SharedChallenge } from '@prisma/client'
 
 @Injectable()
 export class AppService implements OnModuleInit {
@@ -7,12 +9,10 @@ export class AppService implements OnModuleInit {
   private availableChallenges: string[]
   private usedChallenges: string[]
 
-  constructor(private eventEmitter: EventEmitter2){}
+  constructor(private eventEmitter: EventEmitter2, private prisma: PrismaService){}
 
   onModuleInit() {
-      this.setCurrentChallenge("teeeeest")
-      this.availableChallenges = ["on fait des test", "tranquillou"]
-      this.usedChallenges = []
+      this.initChallenges()
       setInterval(() => {
         this.setNewRandomChallenge()
         this.eventEmitter.emit('new.challenge', { newChallenge: this.currentChallenge })
@@ -51,8 +51,13 @@ export class AppService implements OnModuleInit {
     this.usedChallenges.push(usedChallenge)
   }
 
-  resetChallenges(){
-    this.availableChallenges = [...this.usedChallenges]
+  initChallenges(){
+    this.availableChallenges = []
+    this.allSharedChallenges().then(dataFromDb => {
+      dataFromDb.forEach(challengeFromDb => {
+        this.availableChallenges.push(challengeFromDb.name)  
+      })
+    })
     this.usedChallenges = []
   }
 
@@ -65,8 +70,19 @@ export class AppService implements OnModuleInit {
       this.removeAvailableChallengeAt(index)
       this.setCurrentChallenge(randomPickedChallenge)
     } else {
-      this.resetChallenges()
-      this.setNewRandomChallenge()
+      this.initChallenges()
     }
+  }
+
+  async allSharedChallenges() {
+    return this.prisma.sharedChallenge.findMany()
+  }
+
+  async addSharedChallenge(challengeName: string) {
+    return this.prisma.sharedChallenge.create({
+      data: {
+        name: challengeName
+      }
+    })
   }
 }
