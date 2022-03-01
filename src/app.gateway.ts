@@ -15,7 +15,11 @@ export class AppGateway implements OnGatewayConnection{
     constructor(private appService: AppService) {}
 
     handleConnection(client: any, ...args: any[]) {
-        this.server.emit('connection', {challenge: this.appService.getCurrentChallenge(), date: this.appService.getDateCurrentChallenge()})
+        this.server.emit('connection', {
+            challenge: this.appService.getCurrentChallenge(), 
+            date: this.appService.getDateCurrentChallenge(),
+            pastChallenges: this.appService.getUsedChallenge()
+        })
     }
 
     @SubscribeMessage('new.sharedChallenge')
@@ -28,8 +32,27 @@ export class AppGateway implements OnGatewayConnection{
         this.appService.setNewChallengeInterval(this.appService.timeBetweenChallenge)
     }
 
+    @SubscribeMessage('start.bingo')
+    handleStartingBingo(){
+        this.appService.startGame()
+    }
+
+    @SubscribeMessage('stop.bingo')
+    handleStopBingo(){
+        this.appService.stopGame()
+    }
+
+    @OnEvent('stop.bingo')
+    sendStopBingoToClient(){
+        this.server.emit('stop.bingo')
+    }
+
     @OnEvent('new.challenge')
-    handleNewChallenge(payload: {newChallenge: string, dateChallenge: number}){
-        this.server.emit('new.challenge', {challenge: payload.newChallenge, date: payload.dateChallenge})
+    sendNewChallengeToClient(payload: {newChallenge: string, dateChallenge: number, pastChallenges: string[]}){
+        this.server.emit('new.challenge', {
+            challenge: payload.newChallenge, 
+            date: payload.dateChallenge,
+            pastChallenges: payload.pastChallenges
+        })
     }
 }
