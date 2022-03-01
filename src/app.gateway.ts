@@ -8,7 +8,7 @@ import { OnEvent } from '@nestjs/event-emitter'
     cors: true,
 })
 @Injectable()
-export class AppGateway implements OnGatewayConnection{
+export class AppGateway implements OnGatewayConnection {
     @WebSocketServer()
     server: Server;
 
@@ -29,22 +29,22 @@ export class AppGateway implements OnGatewayConnection{
 
     @SubscribeMessage('skip.sharedChallenge')
     handleSkippingSharedChallenge(){
-        this.appService.setNewChallengeInterval(this.appService.timeBetweenChallenge)
+        this.appService.setNewChallengeInterval(this.appService.timeBetweenChallenge, true)
     }
 
-    @SubscribeMessage('start.bingo')
+    @SubscribeMessage('start.bingo.front')
     handleStartingBingo(){
         this.appService.startGame()
     }
 
-    @SubscribeMessage('stop.bingo')
+    @SubscribeMessage('stop.bingo.front')
     handleStopBingo(){
         this.appService.stopGame()
     }
 
     @OnEvent('stop.bingo')
     sendStopBingoToClient(){
-        this.server.emit('stop.bingo')
+        this.server.emit('stop.bingo.back')
     }
 
     @OnEvent('new.challenge')

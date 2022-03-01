@@ -20,7 +20,6 @@ export class AppService implements OnModuleInit {
   }
 
   startGame() {
-    this.currentChallenge = null
     this.resetChallenges()
     this.setNewChallengeInterval(this.timeBetweenChallenge)
   }
@@ -41,8 +40,8 @@ export class AppService implements OnModuleInit {
     return this.usedChallenges
   }
 
-  setNewChallengeInterval(duration: number){
-    // this.setNewRandomChallenge()
+  setNewChallengeInterval(duration: number, skipping: boolean = false){
+    if (skipping) this.setNewRandomChallenge()
     clearInterval(this.newChallengeInterval)
     this.newChallengeInterval = setInterval(() => {
       this.setNewRandomChallenge()
@@ -84,6 +83,7 @@ export class AppService implements OnModuleInit {
 
   resetChallenges(){
     this.currentChallenge = null
+    this.dateCurrentChallenge = Date.now()
     this.availableChallenges = []
     this.allSharedChallenges().then(dataFromDb => {
       dataFromDb.forEach(challengeFromDb => {
@@ -103,7 +103,7 @@ export class AppService implements OnModuleInit {
     this.setCurrentChallenge(randomPickedChallenge)
     this.eventEmitter.emit('new.challenge', { 
       newChallenge: randomPickedChallenge, 
-      dateChallenge: Date.now(),
+      dateChallenge: this.dateCurrentChallenge,
       pastChallenges: this.usedChallenges
     })
   }
