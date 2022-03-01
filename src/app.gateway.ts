@@ -15,7 +15,7 @@ export class AppGateway implements OnGatewayConnection{
     constructor(private appService: AppService) {}
 
     handleConnection(client: any, ...args: any[]) {
-        this.server.emit('connection', {challenge: this.appService.getCurrentChallenge()})
+        this.server.emit('connection', {challenge: this.appService.getCurrentChallenge(), date: this.appService.getDateCurrentChallenge()})
     }
 
     @SubscribeMessage('new.sharedChallenge')
@@ -25,11 +25,11 @@ export class AppGateway implements OnGatewayConnection{
 
     @SubscribeMessage('skip.sharedChallenge')
     handleSkippingSharedChallenge(){
-        this.appService.setNewChallengeInterval(5000)
+        this.appService.setNewChallengeInterval(this.appService.timeBetweenChallenge)
     }
 
     @OnEvent('new.challenge')
-    handleNewChallenge(payload: {newChallenge: string}){
-        this.server.emit('new.challenge', {challenge: payload.newChallenge})
+    handleNewChallenge(payload: {newChallenge: string, dateChallenge: number}){
+        this.server.emit('new.challenge', {challenge: payload.newChallenge, date: payload.dateChallenge})
     }
 }

@@ -1,20 +1,25 @@
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { PrismaService } from './prisma.service'
-import { PrismaClient, SharedChallenge } from '@prisma/client'
 
 @Injectable()
 export class AppService implements OnModuleInit {
   private currentChallenge: string
+  private dateCurrentChallenge: number
   private availableChallenges: string[]
   private usedChallenges: string[]
   private newChallengeInterval: NodeJS.Timer
+  public timeBetweenChallenge: number = 15*60*1000 // 15 min
 
   constructor(private eventEmitter: EventEmitter2, private prisma: PrismaService){}
 
   onModuleInit() {
-      this.initChallenges()
-      this.setNewChallengeInterval(5000)
+    this.resetChallenges()
+    this.setNewChallengeInterval(this.timeBetweenChallenge)
+  }
+
+  getDateCurrentChallenge(){
+    return this.dateCurrentChallenge
   }
 
   setNewChallengeInterval(duration: number){
@@ -31,6 +36,7 @@ export class AppService implements OnModuleInit {
 
   setCurrentChallenge(newChallenge: string) {
     this.currentChallenge = newChallenge
+    this.dateCurrentChallenge = Date.now()
   }
 
   getAvailableChallenges(): string[] {
@@ -57,27 +63,33 @@ export class AppService implements OnModuleInit {
     this.usedChallenges.push(usedChallenge)
   }
 
-  initChallenges(){
+  resetChallenges(){
     this.availableChallenges = []
     this.allSharedChallenges().then(dataFromDb => {
       dataFromDb.forEach(challengeFromDb => {
         this.availableChallenges.push(challengeFromDb.name)  
       })
+      this.usedChallenges = []
+      this.pickRandomChallenge()
     })
-    this.usedChallenges = []
+  }
+
+  pickRandomChallenge() {
+    const numberOfChallenge: number = this.getAvailableChallengesLength()
+    const index: number = Math.floor(Math.random() * numberOfChallenge)
+    const randomPickedChallenge: string = this.getAvailableChallengeAt(index)
+    this.addUsedChallenge(this.getCurrentChallenge())
+    this.removeAvailableChallengeAt(index)
+    this.setCurrentChallenge(randomPickedChallenge)
+    this.eventEmitter.emit('new.challenge', { newChallenge: this.currentChallenge, dateChallenge: this.dateCurrentChallenge })
   }
 
   setNewRandomChallenge() {
     const numberOfChallenge: number = this.getAvailableChallengesLength()
     if (numberOfChallenge > 0){
-      const index: number = Math.floor(Math.random() * numberOfChallenge)
-      const randomPickedChallenge: string = this.getAvailableChallengeAt(index)
-      this.addUsedChallenge(this.getCurrentChallenge())
-      this.removeAvailableChallengeAt(index)
-      this.setCurrentChallenge(randomPickedChallenge)
-      this.eventEmitter.emit('new.challenge', { newChallenge: this.currentChallenge })
+      this.pickRandomChallenge()
     } else {
-      this.initChallenges()
+      this.resetChallenges()
     }
   }
 
